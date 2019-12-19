@@ -18,19 +18,25 @@
 #ifndef _AVS_DRIVER_H
 #define _AVS_DRIVER_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include "type.h"
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <unistd.h>
+//#include "type.h"
 #include "avaspec.h"
-#include "log.h"
-#include "main.h"
+//#include "log.h"
+//#include "main.h"
+
+MeasConfigType SpecDefaultConfig = {
+        0, 2047, 10, 0, 10, {0, 100}, {3,0}, 1, {0, 0, 0}, {0, 0, 0, 0, 0}
+};
 
 MeasConfigType LastMeasSpecConfig;
 
 int spec_config(AvsHandle inSpecHandle, MeasConfigType* inMeasSpecConfig);
 void measure_callback(AvsHandle* handle, int* new_scan);
 void write_spec_data(double wave, double data);
-int spec_meas(AvsHandle inSpecHandle);
+int spec_meas(char* serialnr);
+void spec_stop();
+void spec_init();
 
 #endif

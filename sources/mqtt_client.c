@@ -15,7 +15,12 @@
  * =====================================================================================
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "mqtt_client.h"
+#include "avs_driver.h"
+#include "utils.h"
 
 
 void delivered(void *context, MQTTClient_deliveryToken dt)
@@ -30,10 +35,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 	int i, rc;
 	char* payloadptr;
 	char strpayload[512];
-	AvsHandle specHandle;
-	int RequiredSize = 0;
-	int NrDevices = 0;
-	
 
 	printf("\n\nMessage arrived\n");
 	printf("     topic: %s\n", topicName);
@@ -52,37 +53,38 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 
 	if (!strcmp(topicName, "meas"))
 	{
-		printf("\nMeas received!");
-		spec_meas(AVS_GetHandleFromSerial(strpayload));
+		printf("\nMeasure request received!");
+		spec_meas(strpayload);
 	} else if (!strcmp(topicName, "stop"))
 	{
-		printf("\nStopping Spec: %d\n", AVS_Done());
+		spec_stop();
 	} else if (!strcmp(topicName, "start"))
 	{
-		printf("\nAVS_Init: %d", AVS_Init(0));
-		NrDevices = AVS_UpdateUSBDevices();
-		printf("\nNumber of Connected Devices: %d\n", NrDevices);
-		RequiredSize = NrDevices * sizeof(AvsIdentityType);	
-		
-		AvsIdentityType *devices = (AvsIdentityType *) calloc(RequiredSize, sizeof(AvsIdentityType));
-		AVS_GetList(RequiredSize, &RequiredSize, (AvsIdentityType *)devices);
-		printf("\nDevice List: %s\n", devices);
-	
-		specHandle = AVS_Activate((AvsIdentityType *)devices);
-		printf("\nDevice Handle Activated: %d", specHandle);
-		rc = spec_config(specHandle, &SpecDefaultConfig);
-	
-		if (rc)
-		{
-		        printf("\nERROR: Configuration Failed!");
-		        return -1;
-		}
+        spec_init();
 	}
 
 	MQTTClient_freeMessage(&message);
 	MQTTClient_free(topicName);
 	return 1;
 }
+
+
+void publishmsg(int brokertype, char *topic, void *msg)
+{
+    MQTTClient_message pubmsg = MQTTClient_message_initializer;
+    MQTTClient_deliveryToken token;
+
+    pubmsg.payload = msg;
+    pubmsg.payloadlen = strlen(msg);
+    pubmsg.qos = QOS;
+    pubmsg.retained = 0;
+    deliveredtoken = 0;
+
+    if (brokertype == INTERNAL)
+        MQTTClient_publishMessage(client, topic, &pubmsg, &token);
+    else
+        MQTTClient_publishMessage(outclient, topic, &pubmsg, &token);
+} 
 
 
 void connlost(void *context, char *cause)

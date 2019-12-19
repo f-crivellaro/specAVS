@@ -8,11 +8,11 @@ LIBS=-lavs -lpaho-mqtt3c
 _DEPS = *.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = mqtt_client.o avs_driver.o main.o
+_OBJ = utils.o mqtt_client.o avs_driver.o main.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: %.c $(DEPS)
-	$(CC) -c $< -o $@ $(CFLAGS) -v
+	$(CC) -c $< -o $@ $(CFLAGS) -v -std=c99
 
 spectral: $(OBJ)
 	$(CC) -o ../$@ $^ $(CFLAGS) $(LIBS) -v -Wall -Xlinker --allow-multiple-definition

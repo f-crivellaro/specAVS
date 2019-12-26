@@ -39,7 +39,9 @@ json_meas json_msg;
 int spec_config(AvsHandle inSpecHandle, MeasConfigType* inMeasSpecConfig)
 {
 	int rc=1;
+
 	printf("\nConfigurating Spectrometer ...\n");
+    printf("\nADC: %d\n", AVS_UseHighResAdc(inSpecHandle, true));
 	rc = AVS_PrepareMeasure(inSpecHandle, inMeasSpecConfig);
 	if (rc==0)
 	{

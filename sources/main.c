@@ -7,6 +7,7 @@
 #include "avs_driver.h"
 #include "mqtt_client.h"
 #include "utils.h"
+#include "log.h"
 
 
 
@@ -17,37 +18,30 @@ void main()
 	AvsHandle specHandle;
 	int rc;
 	
+	//clear(); // Clear console window
+
+    log_set_level(LOG_DEBUG);
+    fptr_log = fopen("../log/spectral.log","w");
+    if(fptr_log == NULL)
+    {
+        log_error("Error opening log file!");
+        exit(EXIT_FAILURE);
+    }
+    log_set_fp(fptr_log);
+
+    log_info("#########################################");
+    log_info("# Avantes Spectral Driver is Alive");
+    log_info("#########################################");
+    log_info("");
+	
     signal(SIGINT, handle_shutdown);
 
-	
+
 	// #############################################################################
 	// Spectrometer Default Configuration
 	// #############################################################################
-
-	MeasConfigType MeasSpecConfig = SpecDefaultConfig;
-
-	clear();
-	printf("\nAVANTES Spectrometer Driver\n");
-	printf("\nAVS_Init: %d",AVS_Init(0));
-
-	NrDevices = AVS_UpdateUSBDevices();
-	printf("\nNumber of Connected Devices: %d\n", NrDevices);
-	RequiredSize = NrDevices * sizeof(AvsIdentityType);
-
-	 // Configure a temporary buffer for the incoming data
-	AvsIdentityType *devices = (AvsIdentityType *) calloc(RequiredSize, sizeof(AvsIdentityType));
-	AVS_GetList(RequiredSize, &RequiredSize, (AvsIdentityType *)devices);
-	printf("\nDevice List: %s\n", devices);
-	
-	specHandle = AVS_Activate((AvsIdentityType *)devices);
-	printf("\nDevice Handle Activated: %d", specHandle);
-	rc = spec_config(specHandle, &MeasSpecConfig);
-
-	if (rc)
-	{
-		printf("\n ERROR: Configuration Failed, Finishing Program!");
-		return;
-	}
+    MeasSpecConfig = SpecDefaultConfig;
+    spec_init();
 
 
 	// #############################################################################
@@ -69,7 +63,7 @@ void main()
 	
 	if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
 	{
-	    printf("Failed to connect, return code %d\n", rc);
+	    log_error("Failed to connect, return code %d", rc);
 	    exit(EXIT_FAILURE);
 	}
 
@@ -90,7 +84,7 @@ void main()
 
     if ((rc = MQTTClient_connect(outclient, &conn_opts_out)) != MQTTCLIENT_SUCCESS)
     {
-        printf("Failed to connect to external broker, return code %d\n", rc);
+        log_error("Failed to connect to external broker, return code %d\n", rc);
         exit(EXIT_FAILURE);
     }
 
@@ -106,6 +100,7 @@ void main()
 	MQTTClient_publishMessage(client, TOPIC, &pubmsg, &token);
     MQTTClient_publishMessage(outclient, TOPIC, &pubmsg, &token);
 
+    log_info("All Configuration Done!");    
 
 	while(1);
 }

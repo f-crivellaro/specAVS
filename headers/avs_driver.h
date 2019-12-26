@@ -28,9 +28,10 @@
 //#include "main.h"
 
 MeasConfigType SpecDefaultConfig = {
-        0, 2047, 1.05, 0, 10, {0, 100}, {3,0}, 1, {0, 0, 0}, {0, 0, 0, 0, 0}
+        0, 2047, 1.05, 0, 10, {0, 100}, {3,0}, 0, {0, 0, 0}, {0, 0, 0, 0, 0}
 };
 
+MeasConfigType MeasSpecConfig;
 MeasConfigType LastMeasSpecConfig;
 
 clock_t t;

@@ -26,6 +26,7 @@
 #include "avs_driver.h"
 #include "mqtt_client.h"
 #include "utils.h"
+#include "log.h"
 
 typedef struct
 {
@@ -40,16 +41,16 @@ int spec_config(AvsHandle inSpecHandle, MeasConfigType* inMeasSpecConfig)
 {
 	int rc=1;
 
-	printf("\nConfigurating Spectrometer ...\n");
-    printf("\nADC: %d\n", AVS_UseHighResAdc(inSpecHandle, true));
+	log_info("Driver: Configurating Spectrometer ...");
+    log_debug("Driver: High Definition ADC: %d", AVS_UseHighResAdc(inSpecHandle, true));
 	rc = AVS_PrepareMeasure(inSpecHandle, inMeasSpecConfig);
 	if (rc==0)
 	{
 		LastMeasSpecConfig = *inMeasSpecConfig;
-		printf("Configuration Ended\n");
+		log_info("Driver: Configuration Successful");
 	}
 	else
-		printf("Configuration Failed\n");
+		log_error("Driver: Configuration Failed");
 	
 	return rc;
 }
@@ -59,29 +60,28 @@ void measure_callback(AvsHandle* handle, int* new_scan)
 {
     int timestamp;    
 
-    puts("\n\n==================================");
-    printf("Measurement Callback:\n");
-    puts("==================================");
+    log_info("==================================");
+    log_info("Measurement Callback:");
+    log_info("==================================");
     //printf("\n\tHandle: %d", *handle);
-    printf("\nStatus: %d", *new_scan);
+    log_info("Driver: Status: %d", *new_scan);
     t = clock() - t;
     double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
-    printf("\n\nLast Meas took %f seconds to be made.\n", time_taken); 
+    log_debug("Driver: Last Meas took %f seconds to be made.", time_taken); 
 
 	AVS_GetNumPixels(*handle, &npixels);
-	printf("\nN Pixels: %d", npixels);
+	log_info("Driver: N Pixels: %d", npixels);
 	double *wavelengths = (double *) calloc(npixels, sizeof(double));
 	AVS_GetLambda(*handle, wavelengths);
-	printf("\nStart Wavelength: %f", wavelengths[0]);
-	printf("\nStop  Wavelength: %f", wavelengths[npixels-1]);
+	log_info("Driver: Start Wavelength: %f", wavelengths[0]);
+	log_info("Driver: Stop  Wavelength: %f", wavelengths[npixels-1]);
 
 
 	double *specMeasures = (double *) calloc(npixels, sizeof(double));
 
-	printf("\nResults: %d\0", AVS_GetScopeData(*handle, &timestamp, specMeasures));
+	log_debug("Driver: Results: %d\0", AVS_GetScopeData(*handle, &timestamp, specMeasures));
 
 
-    printf("\n");
     char str[53410];
     char linestr[13];
     char aux_str[50];
@@ -135,7 +135,8 @@ void measure_callback(AvsHandle* handle, int* new_scan)
 
     char topic[16] = "spec/meas";
     publishmsg(EXTERNAL, topic, str);
-	printf("\nMeasure Ended!\n");		
+	log_info("Driver: Measure Ended!");		
+    log_info("");
 
 }
 
@@ -146,7 +147,7 @@ void write_spec_data(double wave, double data)
         fptr = fopen("./test.csv","a");
         if(fptr == NULL)
         {
-                printf("Error!");
+                log_error("Driver: Error Writing Spec Data File!");
                 exit(1);
         }
         fprintf(fptr,"%f,%f\n",wave,data);
@@ -167,7 +168,7 @@ int spec_meas(char* serialnr)
 
 void spec_stop()
 {
-    printf("\nStopping Spec: %d\n", AVS_Done());
+    log_info("Driver: Stopping Spec: %d", AVS_Done());
 }
 
 
@@ -178,22 +179,27 @@ void spec_init()
     int RequiredSize = 0;
     AvsHandle specHandle;
 
-    printf("\nAVS_Init: %d", AVS_Init(0));
-    NrDevices = AVS_UpdateUSBDevices();
-    printf("\nNumber of Connected Devices: %d\n", NrDevices);
-    RequiredSize = NrDevices * sizeof(AvsIdentityType);
+    log_info("");
+	log_debug("Driver: AVS_Init: %d",AVS_Init(0));
 
-    AvsIdentityType *devices = (AvsIdentityType *) calloc(RequiredSize, sizeof(AvsIdentityType));
-    AVS_GetList(RequiredSize, &RequiredSize, (AvsIdentityType *)devices);
-    printf("\nDevice List: %s\n", devices);
+	NrDevices = AVS_UpdateUSBDevices();
+	log_info("Driver: Number of Connected Devices: %d", NrDevices);
+	RequiredSize = NrDevices * sizeof(AvsIdentityType);
 
-    specHandle = AVS_Activate((AvsIdentityType *)devices);
-    printf("\nDevice Handle Activated: %d", specHandle);
-    rc = spec_config(specHandle, &SpecDefaultConfig);
+	 // Configure a temporary buffer for the incoming data
+	AvsIdentityType *devices = (AvsIdentityType *) calloc(RequiredSize, sizeof(AvsIdentityType));
+	AVS_GetList(RequiredSize, &RequiredSize, (AvsIdentityType *)devices);
+	log_info("Driver: Device List: %s", devices);
+	
+	specHandle = AVS_Activate((AvsIdentityType *)devices);
+	log_info("Driver: Device Handle Activated: %d", specHandle);
+	rc = spec_config(specHandle, &MeasSpecConfig);
 
-    if (rc)
-    {
-        printf("\nERROR: Configuration Failed!");
-        //return -1;
-    }
+	if (rc)
+	{
+		log_error("ERROR: Configuration Failed, Finishing Program!");
+		exit(EXIT_FAILURE);
+	}
+    log_info("");
+
 }

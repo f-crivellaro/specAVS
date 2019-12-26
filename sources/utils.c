@@ -20,19 +20,20 @@
 #include <stdio.h>
 #include "MQTTClient.h"
 #include "utils.h"
+#include "log.h"
 
 void handle_shutdown(int sig)
 {
 
-    printf("\nHandle Shutdown");
+    log_info("EXIT: Handle Shutdown");
     MQTTClient_disconnect(client, 10000);
     MQTTClient_disconnect(outclient, 10000);
 
-    printf("\nMQTT Clients Disconnected");
+    log_info("EXIT: MQTT Clients Disconnected");
     MQTTClient_destroy(&client);
-    printf("\nMQTT Clients Destroyed");
+    log_info("EXIT: MQTT Clients Destroyed");
 
-    printf("\nSpectral program closed\n");
+    log_info("EXIT: Spectral program closed");
     exit(0);
 }
 

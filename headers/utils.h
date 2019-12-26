@@ -37,4 +37,6 @@ MQTTClient outclient;
 MQTTClient_deliveryToken outtoken;
 MQTTClient_deliveryToken deliveredouttoken;
 
+FILE *fptr_log;
+
 void handle_shutdown(int sig);

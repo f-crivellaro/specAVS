@@ -8,7 +8,7 @@ LIBS=-lavs -lpaho-mqtt3c
 _DEPS = *.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = utils.o mqtt_client.o avs_driver.o main.o
+_OBJ = log.o utils.o mqtt_client.o avs_driver.o main.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: %.c $(DEPS)
@@ -22,3 +22,4 @@ spectral: $(OBJ)
 clean:
 	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~
 	rm -f ../spectral
+	rm -f ../log/*

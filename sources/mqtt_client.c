@@ -21,11 +21,11 @@
 #include "mqtt_client.h"
 #include "avs_driver.h"
 #include "utils.h"
-
+#include "log.h"
 
 void delivered(void *context, MQTTClient_deliveryToken dt)
 {
-    printf("Message with token value %d delivery confirmed\n", dt);
+    log_debug("MQTT: Message with token value %d delivery confirmed", dt);
     //deliveredtoken = dt;
 }
 
@@ -44,24 +44,22 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     const char sEnd[3] = "}";
     const char sDouble[3] = ":";
 
-	printf("\n\nMessage arrived\n");
-	printf("     topic: %s\n", topicName);
-	printf("   message: ");
-	payloadptr = message->payload;
+
+    payloadptr = message->payload;
 	for(i=0; i<message->payloadlen; i++)
 	{
 		strpayload[i] = *payloadptr;
 		putchar(*payloadptr++);
 	}
 	strpayload[message->payloadlen]='\0';
-	putchar('\n');
+	
+    log_info("");
+    log_info("MQTT: Message arrived - {Topic: %s, Message: %s}", topicName, strpayload);
 
-	//printf("\nPayload Len: %d", message->payloadlen);
-	//printf("\nPayload: %s\n", strpayload);
 
 	if (!strcmp(topicName, "meas"))
 	{
-		printf("\nMeasure request received!");
+		log_info("MQTT: Measure request received!");
 		spec_meas(strpayload);
 	} else if (!strcmp(topicName, "stop"))
 	{
@@ -76,13 +74,13 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
         tokenNrAverages = strtok(0, sDouble);
         //printf("\n%s\n", tokenNrAverages);
         nrAverages = strtok(0, sEnd);
-        SpecDefaultConfig.m_NrAverages = atoi(nrAverages);
-        printf("\nNr. of Averages: %d\n", SpecDefaultConfig.m_NrAverages);    
+        MeasSpecConfig.m_NrAverages = atoi(nrAverages);
+        log_info("MQTT: Nr. of Averages: %d", MeasSpecConfig.m_NrAverages);    
         token = strtok(tokenIntegrationTime, ":");
         integrationTime = strtok(0, ":");
-        SpecDefaultConfig.m_IntegrationTime = atof(integrationTime);
-        printf("\nIntegration Time: %f\n", SpecDefaultConfig.m_IntegrationTime);
-        spec_config(AVS_GetHandleFromSerial("0806052U1"), &SpecDefaultConfig);
+        MeasSpecConfig.m_IntegrationTime = atof(integrationTime);
+        log_info("MQTT: Integration Time: %f", MeasSpecConfig.m_IntegrationTime);
+        spec_config(AVS_GetHandleFromSerial("0806052U1"), &MeasSpecConfig);
 	}
 
 	MQTTClient_freeMessage(&message);
@@ -111,8 +109,8 @@ void publishmsg(int brokertype, char *topic, void *msg)
 
 void connlost(void *context, char *cause)
 {
-    printf("\nConnection lost\n");
-    printf("     cause: %s\n", cause);
+    log_error("MQTT: Connection lost");
+    log_error("MQTT:     cause: %s", cause);
 }
 
 

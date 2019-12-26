@@ -76,6 +76,7 @@ void main()
 	MQTTClient_subscribe(client, "meas", QOS);
 	MQTTClient_subscribe(client, "stop", QOS);
 	MQTTClient_subscribe(client, "start", QOS);
+	MQTTClient_subscribe(client, "config", QOS);
 
 
 

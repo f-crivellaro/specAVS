@@ -35,6 +35,14 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 	int i, rc;
 	char* payloadptr;
 	char strpayload[512];
+    char* token;
+    char* tokenIntegrationTime;
+    char* tokenNrAverages;
+    char* integrationTime;
+    char* nrAverages;
+    const char s[3] = ",";
+    const char sEnd[3] = "}";
+    const char sDouble[3] = ":";
 
 	printf("\n\nMessage arrived\n");
 	printf("     topic: %s\n", topicName);
@@ -61,6 +69,20 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 	} else if (!strcmp(topicName, "start"))
 	{
         spec_init();
+	} else if (!strcmp(topicName, "config"))
+	{
+        tokenIntegrationTime = strtok(strpayload, s);       
+        //printf("\n%s\n", tokenIntegrationTime);
+        tokenNrAverages = strtok(0, sDouble);
+        //printf("\n%s\n", tokenNrAverages);
+        nrAverages = strtok(0, sEnd);
+        SpecDefaultConfig.m_NrAverages = atoi(nrAverages);
+        printf("\nNr. of Averages: %d\n", SpecDefaultConfig.m_NrAverages);    
+        token = strtok(tokenIntegrationTime, ":");
+        integrationTime = strtok(0, ":");
+        SpecDefaultConfig.m_IntegrationTime = atof(integrationTime);
+        printf("\nIntegration Time: %f\n", SpecDefaultConfig.m_IntegrationTime);
+        spec_config(AVS_GetHandleFromSerial("0806052U1"), &SpecDefaultConfig);
 	}
 
 	MQTTClient_freeMessage(&message);

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+//#include <time.h>
 #include "type.h"
 #include "avaspec.h"
 #include "log.h"
@@ -54,9 +55,86 @@ int spec_config(AvsHandle inSpecHandle, MeasConfigType* inMeasSpecConfig)
 
 void measure_callback(AvsHandle* handle, int* new_scan)
 {
-        printf("\nMeasurement Callback:");
-        printf("\n\tHandle: %d", *handle);
-        printf("\n\tNew Scan: %d", *new_scan);
+    int timestamp;    
+
+    puts("\n\n==================================");
+    printf("Measurement Callback:\n");
+    puts("==================================");
+    //printf("\n\tHandle: %d", *handle);
+    printf("\nStatus: %d", *new_scan);
+    t = clock() - t;
+    double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
+    printf("\n\nLast Meas took %f seconds to be made.\n", time_taken); 
+
+	AVS_GetNumPixels(*handle, &npixels);
+	printf("\nN Pixels: %d", npixels);
+	double *wavelengths = (double *) calloc(npixels, sizeof(double));
+	AVS_GetLambda(*handle, wavelengths);
+	printf("\nStart Wavelength: %f", wavelengths[0]);
+	printf("\nStop  Wavelength: %f", wavelengths[npixels-1]);
+
+
+	double *specMeasures = (double *) calloc(npixels, sizeof(double));
+
+	printf("\nResults: %d\0", AVS_GetScopeData(*handle, &timestamp, specMeasures));
+
+
+    printf("\n");
+    char str[53410];
+    char linestr[13];
+    char aux_str[50];
+
+    strcpy(str, "{\"serial_number\": \"");
+    strcat(str, oneSerial);
+    strcpy(aux_str, "\",\"wave_start\": ");
+    strcat(str, aux_str);
+    sprintf(aux_str, "%04.06f", wavelengths[0]);
+    strcat(str, aux_str);
+    strcpy(aux_str, ",\"wave_end\": ");
+    strcat(str, aux_str);
+    sprintf(aux_str, "%04.06f", wavelengths[npixels-1]);
+    strcat(str, aux_str);
+    strcpy(aux_str, ",\"data\": [");
+    strcat(str, aux_str);
+    
+	for (int i = 0; i < npixels; i++)
+	{
+	        //write_spec_data(wavelengths[i],specMeasures[i]);
+        if (i == npixels-1)
+            sprintf(linestr, "%05.06f", specMeasures[i]);
+        else
+            sprintf(linestr, "%05.06f,", specMeasures[i]);
+            
+            strcat(str, linestr);
+	}
+
+    strcpy(aux_str, "]");
+    strcat(str, aux_str);
+
+    strcpy(aux_str, ",\"wavelengths\": [");
+    strcat(str, aux_str);
+
+	for (int i = 0; i < npixels; i++)
+	{
+	    //write_spec_data(wavelengths[i],specMeasures[i]);
+        if (i == npixels-1)
+            sprintf(linestr, "%04.06f", wavelengths[i]);
+        else
+            sprintf(linestr, "%04.06f,", wavelengths[i]);
+            
+            strcat(str, linestr);
+	}
+
+
+    strcpy(aux_str, "]}");
+    strcat(str, aux_str);
+
+    //printf(str);
+
+    char topic[16] = "spec/meas";
+    publishmsg(EXTERNAL, topic, str);
+	printf("\nMeasure Ended!\n");		
+
 }
 
 
@@ -75,77 +153,11 @@ void write_spec_data(double wave, double data)
 
 int spec_meas(char* serialnr)
 {
-	int timestamp;
-	unsigned short npixels;
-	int poll = -1;
 
     AvsHandle specHandle = AVS_GetHandleFromSerial(serialnr);
-	AVS_GetNumPixels(specHandle, &npixels);
-	printf("\nN Pixels: %d", npixels);
-	double *wavelengths = (double *) calloc(npixels, sizeof(double));
-	AVS_GetLambda(specHandle, wavelengths);
-	printf("\nStart Wavelength: %f", wavelengths[0]);
-	printf("\nStop  Wavelength: %f", wavelengths[npixels-1]);
-
-	AVS_MeasureCallback(specHandle, &measure_callback, 1);
-
-	poll = AVS_PollScan(specHandle);
-	if (poll<0)
-	{
-		printf("\nDevice Error: %d\n", poll);
-		return poll;
-	}
-
-	printf("\nStarting Polling: %d\0", poll);
-	while(poll!=1)
-	{
-	        poll = AVS_PollScan(specHandle);
-	        printf("\nPoll: %d\0", poll);
-        	sleep(1);
-	};
-
-	double *specMeasures = (double *) calloc(npixels, sizeof(double));
-
-	printf("\nResults: %d\0", AVS_GetScopeData(specHandle, &timestamp, specMeasures));
-
-
-    printf("\n");
-    char str[26705];
-    char linestr[13];
-    char aux_str[50];
-
-    strcpy(str, "{\"serial_number\": \"");
-    strcat(str, serialnr);
-    strcpy(aux_str, "\",\"wave_start\": ");
-    strcat(str, aux_str);
-    sprintf(aux_str, "%4.6f", wavelengths[0]);
-    strcat(str, aux_str);
-    strcpy(aux_str, ",\"wave_end\": ");
-    strcat(str, aux_str);
-    sprintf(aux_str, "%4.6f", wavelengths[npixels-1]);
-    strcat(str, aux_str);
-    strcpy(aux_str, ",\"data\": [");
-    strcat(str, aux_str);
-    
-	for (int i = 0; i < npixels; i++)
-	{
-	        write_spec_data(wavelengths[i],specMeasures[i]);
-            if (i == npixels-1)
-                sprintf(linestr, "%05.06f", specMeasures[i]);
-            else
-                sprintf(linestr, "%05.06f,", specMeasures[i]);
-            
-            strcat(str, linestr);
-	}
-
-    strcpy(aux_str, "]}");
-    strcat(str, aux_str);
-
-    printf(str);
-
-    char topic[16] = "spec/meas";
-    publishmsg(EXTERNAL, topic, str);
-	printf("\nMeasure Ended!\n");		
+    oneSerial = serialnr;
+    t = clock();
+	AVS_MeasureCallback(specHandle, &measure_callback, 1);    
 
 	return 0;
 }

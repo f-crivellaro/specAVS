@@ -22,15 +22,20 @@
 //#include <stdlib.h>
 //#include <unistd.h>
 //#include "type.h"
+#include <time.h>
 #include "avaspec.h"
 //#include "log.h"
 //#include "main.h"
 
 MeasConfigType SpecDefaultConfig = {
-        0, 2047, 10, 0, 10, {0, 100}, {3,0}, 1, {0, 0, 0}, {0, 0, 0, 0, 0}
+        0, 2047, 1.05, 0, 10, {0, 100}, {3,0}, 1, {0, 0, 0}, {0, 0, 0, 0, 0}
 };
 
 MeasConfigType LastMeasSpecConfig;
+
+clock_t t;
+unsigned short npixels;
+char* oneSerial;
 
 int spec_config(AvsHandle inSpecHandle, MeasConfigType* inMeasSpecConfig);
 void measure_callback(AvsHandle* handle, int* new_scan);

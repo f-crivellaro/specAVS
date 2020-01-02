@@ -18,14 +18,8 @@
 #ifndef _AVS_DRIVER_H
 #define _AVS_DRIVER_H
 
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <unistd.h>
-//#include "type.h"
 #include <time.h>
 #include "avaspec.h"
-//#include "log.h"
-//#include "main.h"
 
 MeasConfigType SpecDefaultConfig = {
         0, 2047, 1.05, 0, 10, {0, 100}, {3,0}, 0, {0, 0, 0}, {0, 0, 0, 0, 0}

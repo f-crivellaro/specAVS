@@ -89,7 +89,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 }
 
 
-void publishmsg(int brokertype, char *topic, void *msg)
+void publishmsg(char *topic, void *msg)
 {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     MQTTClient_deliveryToken token;
@@ -100,10 +100,7 @@ void publishmsg(int brokertype, char *topic, void *msg)
     pubmsg.retained = 0;
     deliveredtoken = 0;
 
-    if (brokertype == INTERNAL)
-        MQTTClient_publishMessage(client, topic, &pubmsg, &token);
-    else
-        MQTTClient_publishMessage(outclient, topic, &pubmsg, &token);
+    MQTTClient_publishMessage(client, topic, &pubmsg, &token);
 } 
 
 

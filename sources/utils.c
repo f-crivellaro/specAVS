@@ -27,7 +27,6 @@ void handle_shutdown(int sig)
 
     log_info("EXIT: Handle Shutdown");
     MQTTClient_disconnect(client, 10000);
-    MQTTClient_disconnect(outclient, 10000);
 
     log_info("EXIT: MQTT Clients Disconnected");
     MQTTClient_destroy(&client);

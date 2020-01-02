@@ -69,6 +69,8 @@ void measure_callback(AvsHandle* handle, int* new_scan)
     double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
     log_debug("Driver: Last Meas took %f seconds to be made.", time_taken); 
 
+    log_info("Driver: Integration Time (s): %6.3f", LastMeasSpecConfig.m_IntegrationTime);
+    log_info("Driver: Number of Averages: %d", LastMeasSpecConfig.m_NrAverages);
 	AVS_GetNumPixels(*handle, &npixels);
 	log_info("Driver: N Pixels: %d", npixels);
 	double *wavelengths = (double *) calloc(npixels, sizeof(double));
@@ -82,19 +84,31 @@ void measure_callback(AvsHandle* handle, int* new_scan)
 	log_debug("Driver: Results: %d\0", AVS_GetScopeData(*handle, &timestamp, specMeasures));
 
 
-    char str[53410];
+    char str[53600];
     char linestr[13];
     char aux_str[50];
 
     strcpy(str, "{\"serial_number\": \"");
     strcat(str, oneSerial);
-    strcpy(aux_str, "\",\"wave_start\": ");
+    strcpy(aux_str, "\",\"integration_time\": ");
+    strcat(str, aux_str);
+    sprintf(aux_str, "%6.03f", LastMeasSpecConfig.m_IntegrationTime);
+    strcat(str, aux_str);
+    strcpy(aux_str, ",\"nr_averages\": ");
+    strcat(str, aux_str);
+    sprintf(aux_str, "%6d", LastMeasSpecConfig.m_NrAverages);
+    strcat(str, aux_str);
+    strcpy(aux_str, ",\"wave_start\": ");
     strcat(str, aux_str);
     sprintf(aux_str, "%04.06f", wavelengths[0]);
     strcat(str, aux_str);
     strcpy(aux_str, ",\"wave_end\": ");
     strcat(str, aux_str);
     sprintf(aux_str, "%04.06f", wavelengths[npixels-1]);
+    strcat(str, aux_str);
+    strcpy(aux_str, ",\"n_pixels\": ");
+    strcat(str, aux_str);
+    sprintf(aux_str, "%04d", npixels);
     strcat(str, aux_str);
     strcpy(aux_str, ",\"data\": [");
     strcat(str, aux_str);
@@ -134,7 +148,7 @@ void measure_callback(AvsHandle* handle, int* new_scan)
     //printf(str);
 
     char topic[16] = "spec/meas";
-    publishmsg(EXTERNAL, topic, str);
+    publishmsg(topic, str);
 	log_info("Driver: Measure Ended!");		
     log_info("");
 

@@ -33,9 +33,6 @@ MQTTClient client;
 MQTTClient_deliveryToken token;
 MQTTClient_deliveryToken deliveredtoken;
 
-MQTTClient outclient;
-MQTTClient_deliveryToken outtoken;
-MQTTClient_deliveryToken deliveredouttoken;
 
 FILE *fptr_log;
 

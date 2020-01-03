@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-//#include <time.h>
 #include "type.h"
 #include "avaspec.h"
 #include "log.h"
@@ -28,13 +27,6 @@
 #include "utils.h"
 #include "log.h"
 
-typedef struct
-{
-    double data[2048];
-    char serial[16];
-} json_meas;
-
-json_meas json_msg;
 
 
 int spec_config(AvsHandle inSpecHandle, MeasConfigType* inMeasSpecConfig)
@@ -63,7 +55,6 @@ void measure_callback(AvsHandle* handle, int* new_scan)
     log_info("==================================");
     log_info("Measurement Callback:");
     log_info("==================================");
-    //printf("\n\tHandle: %d", *handle);
     log_info("Driver: Status: %d", *new_scan);
     t = clock() - t;
     double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
@@ -115,7 +106,6 @@ void measure_callback(AvsHandle* handle, int* new_scan)
     
 	for (int i = 0; i < npixels; i++)
 	{
-	        //write_spec_data(wavelengths[i],specMeasures[i]);
         if (i == npixels-1)
             sprintf(linestr, "%05.06f", specMeasures[i]);
         else
@@ -132,7 +122,6 @@ void measure_callback(AvsHandle* handle, int* new_scan)
 
 	for (int i = 0; i < npixels; i++)
 	{
-	    //write_spec_data(wavelengths[i],specMeasures[i]);
         if (i == npixels-1)
             sprintf(linestr, "%04.06f", wavelengths[i]);
         else
@@ -145,8 +134,6 @@ void measure_callback(AvsHandle* handle, int* new_scan)
     strcpy(aux_str, "]}");
     strcat(str, aux_str);
 
-    //printf(str);
-
     char topic[16] = "spec/meas";
     publishmsg(topic, str);
 	log_info("Driver: Measure Ended!");		
@@ -155,18 +142,6 @@ void measure_callback(AvsHandle* handle, int* new_scan)
 }
 
 
-void write_spec_data(double wave, double data)
-{
-        FILE *fptr;
-        fptr = fopen("./test.csv","a");
-        if(fptr == NULL)
-        {
-                log_error("Driver: Error Writing Spec Data File!");
-                exit(1);
-        }
-        fprintf(fptr,"%f,%f\n",wave,data);
-        fclose(fptr);
-}
 
 int spec_meas(char* serialnr)
 {
@@ -217,3 +192,18 @@ void spec_init()
     log_info("");
 
 }
+
+
+void write_spec_data(double wave, double data)
+{
+        FILE *fptr;
+        fptr = fopen("./test.csv","a");
+        if(fptr == NULL)
+        {
+                log_error("Driver: Error Writing Spec Data File!");
+                exit(1);
+        }
+        fprintf(fptr,"%f,%f\n",wave,data);
+        fclose(fptr);
+}
+

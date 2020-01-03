@@ -23,10 +23,10 @@
 #include "utils.h"
 #include "log.h"
 
+
 void delivered(void *context, MQTTClient_deliveryToken dt)
 {
     log_debug("MQTT: Message with token value %d delivery confirmed", dt);
-    //deliveredtoken = dt;
 }
 
 
@@ -54,25 +54,26 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 	strpayload[message->payloadlen]='\0';
 	
     log_info("");
-    log_info("MQTT: Message arrived - {Topic: %s, Message: %s}", topicName, strpayload);
+    log_info("MQTT: Message received - {Topic: %s, Message: %s}", topicName, strpayload);
 
 
-	if (!strcmp(topicName, "meas"))
+	if (!strcmp(topicName, "spec/cmd/meas"))
 	{
 		log_info("MQTT: Measure request received!");
 		spec_meas(strpayload);
-	} else if (!strcmp(topicName, "stop"))
+	} else if (!strcmp(topicName, "spec/cmd/stop"))
 	{
 		spec_stop();
-	} else if (!strcmp(topicName, "start"))
+	} else if (!strcmp(topicName, "spec/cmd/start"))
 	{
         spec_init();
-	} else if (!strcmp(topicName, "config"))
+	} else if (!strcmp(topicName, "spec/config"))
 	{
+        log_info("==================================");
+        log_info("New Device Configuration:");
+        log_info("==================================");      
         tokenIntegrationTime = strtok(strpayload, s);       
-        //printf("\n%s\n", tokenIntegrationTime);
         tokenNrAverages = strtok(0, sDouble);
-        //printf("\n%s\n", tokenNrAverages);
         nrAverages = strtok(0, sEnd);
         MeasSpecConfig.m_NrAverages = atoi(nrAverages);
         log_info("MQTT: Nr. of Averages: %d", MeasSpecConfig.m_NrAverages);    

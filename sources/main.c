@@ -17,10 +17,7 @@ void main(int argc, char *argv[])
 	int RequiredSize = 0;
 	AvsHandle specHandle;
 	int rc;
-	
-	//clear(); // Clear console window
 
-    //log_set_level(LOG_DEBUG);
     log_set_level(atoi(argv[1]));
     fptr_log = fopen("/home/pi/specAVS/log/spectral.log","w");
     if(fptr_log == NULL)
@@ -48,12 +45,9 @@ void main(int argc, char *argv[])
 	// #############################################################################
 	// MQTT Configuring
 	// #############################################################################	
-	//MQTTClient client;
 	MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
 	MQTTClient_message pubmsg = MQTTClient_message_initializer;
 
-	//MQTTClient_deliveryToken token;
-	
 
     MQTTClient_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
@@ -69,7 +63,7 @@ void main(int argc, char *argv[])
 	    if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
     	{
 	        log_error("MQTT: Failed to connect to MQTT Broker, return code %d", rc);
-	        //exit(EXIT_FAILURE);
+	        log_info("MQTT: Trying reconnection...");
 	        sleep(1);
     	} else 
         {
@@ -78,10 +72,10 @@ void main(int argc, char *argv[])
         }
     }
 
-	MQTTClient_subscribe(client, "meas", QOS);
-	MQTTClient_subscribe(client, "stop", QOS);
-	MQTTClient_subscribe(client, "start", QOS);
-	MQTTClient_subscribe(client, "config", QOS);
+	MQTTClient_subscribe(client, "spec/cmd/meas", QOS);
+	MQTTClient_subscribe(client, "spec/cmd/stop", QOS);
+	MQTTClient_subscribe(client, "spec/cmd/start", QOS);
+	MQTTClient_subscribe(client, "spec/config", QOS);
 
     log_info("");
     log_info("SYSTEM: All Configuration Done!");    

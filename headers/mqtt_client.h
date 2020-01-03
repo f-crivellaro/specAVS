@@ -16,10 +16,11 @@
  */
 
 #ifndef _MQTT_CLIENT_H
-#define _MQTT_CLIENT_H 1
+#define _MQTT_CLIENT_H
 
 #include <stdbool.h>
 #include "MQTTClient.h"
+
 
 void delivered(void *context, MQTTClient_deliveryToken dt);
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message);

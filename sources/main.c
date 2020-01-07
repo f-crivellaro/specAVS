@@ -31,6 +31,7 @@ void main(int argc, char *argv[])
     log_info("# Avantes Spectral Driver");
     log_info("#########################################");
     log_info("");
+
 	
     signal(SIGINT, handle_shutdown);
 

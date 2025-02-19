@@ -3,7 +3,7 @@
  *
  *       Filename:  mqtt_client.h
  *
- *    Description:  
+ *    Description:
  *
  *        Version:  1.0
  *        Created:  10-12-2019 13:50:11
@@ -20,6 +20,7 @@
 
 #include <stdbool.h>
 #include "MQTTClient.h"
+#include <cjson/cJSON.h>
 
 
 void delivered(void *context, MQTTClient_deliveryToken dt);

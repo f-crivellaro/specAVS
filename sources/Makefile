@@ -3,7 +3,7 @@ CC=gcc
 CFLAGS=-iquote$(IDIR)
 
 ODIR=obj
-LIBS=-lavs -lpaho-mqtt3c
+LIBS=-lavs -lpaho-mqtt3c -lcjson
 
 _DEPS = *.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))

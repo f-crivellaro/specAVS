@@ -3,7 +3,7 @@
  *
  *       Filename:  mqtt_client.c
  *
- *    Description:  
+ *    Description:
  *
  *        Version:  1.0
  *        Created:  05-12-2019 15:45:25
@@ -35,11 +35,13 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 	int i, rc;
 	char* payloadptr;
 	char strpayload[512];
-    char* token;
-    char* tokenIntegrationTime;
-    char* tokenNrAverages;
-    char* integrationTime;
-    char* nrAverages;
+    // char* token;
+    // char* tokenIntegrationTime;
+    // char* tokenNrAverages;
+    char* serial;
+    double integrationTime;
+    int nrAverages;
+    int nrAggregation;
     const char s[3] = ",";
     const char sEnd[3] = "}";
     const char sDouble[3] = ":";
@@ -52,7 +54,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 		putchar(*payloadptr++);
 	}
 	strpayload[message->payloadlen]='\0';
-	
+
     log_info("");
     log_info("MQTT: Message received - {Topic: %s, Message: %s}", topicName, strpayload);
 
@@ -67,21 +69,33 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 	} else if (!strcmp(topicName, "spec/cmd/start"))
 	{
         spec_init();
-	} else if (!strcmp(topicName, "spec/config"))
+	} else if (!strcmp(topicName, "spec/cmd/config"))
 	{
         log_info("==================================");
         log_info("New Device Configuration:");
-        log_info("==================================");      
-        tokenIntegrationTime = strtok(strpayload, s);       
-        tokenNrAverages = strtok(0, sDouble);
-        nrAverages = strtok(0, sEnd);
-        MeasSpecConfig.m_NrAverages = atoi(nrAverages);
-        log_info("MQTT: Nr. of Averages: %d", MeasSpecConfig.m_NrAverages);    
-        token = strtok(tokenIntegrationTime, ":");
-        integrationTime = strtok(0, ":");
-        MeasSpecConfig.m_IntegrationTime = atof(integrationTime);
+        log_info("==================================");
+        cJSON *json = cJSON_Parse(strpayload);
+        if (json == NULL) {
+            log_error("MQTT: Error parsing JSON\n");
+            return 1;
+        }
+
+        cJSON *tokenSerial = cJSON_GetObjectItem(json, "serial");
+        cJSON *tokenIntegrationTime = cJSON_GetObjectItem(json, "integrationTime");
+        cJSON *tokenNrAverages = cJSON_GetObjectItem(json, "nrAverages");
+        cJSON *tokenAggregationSamples = cJSON_GetObjectItem(json, "aggregation_samples");
+
+        serial = tokenSerial->valuestring;
+        integrationTime = tokenIntegrationTime->valuedouble;
+        nrAverages = tokenNrAverages->valueint;
+        nrAggregation = tokenAggregationSamples->valueint;
+
+        MeasSpecConfig.m_NrAverages = nrAverages; //atoi(nrAverages);
+        log_info("MQTT: Nr. of Averages: %d", MeasSpecConfig.m_NrAverages);
+
+        MeasSpecConfig.m_IntegrationTime = integrationTime; //atof(integrationTime);
         log_info("MQTT: Integration Time: %f", MeasSpecConfig.m_IntegrationTime);
-        spec_config(AVS_GetHandleFromSerial("0806052U1"), &MeasSpecConfig);
+        spec_config(AVS_GetHandleFromSerial(serial), &MeasSpecConfig);
 	}
 
 	MQTTClient_freeMessage(&message);
@@ -102,7 +116,7 @@ void publishmsg(char *topic, void *msg)
     deliveredtoken = 0;
 
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
-} 
+}
 
 
 void connlost(void *context, char *cause)

@@ -43,14 +43,14 @@ int spec_config(AvsHandle inSpecHandle, MeasConfigType* inMeasSpecConfig)
 	}
 	else
 		log_error("Driver: Configuration Failed");
-	
+
 	return rc;
 }
 
 
 void measure_callback(AvsHandle* handle, int* new_scan)
 {
-    int timestamp;    
+    int timestamp;
 
     log_info("==================================");
     log_info("Measurement Callback:");
@@ -58,7 +58,7 @@ void measure_callback(AvsHandle* handle, int* new_scan)
     log_info("Driver: Status: %d", *new_scan);
     t = clock() - t;
     double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
-    log_debug("Driver: Last Meas took %f seconds to be made.", time_taken); 
+    log_debug("Driver: Last Meas took %f seconds to be made.", time_taken);
 
     log_info("Driver: Integration Time (s): %6.3f", LastMeasSpecConfig.m_IntegrationTime);
     log_info("Driver: Number of Averages: %d", LastMeasSpecConfig.m_NrAverages);
@@ -103,14 +103,14 @@ void measure_callback(AvsHandle* handle, int* new_scan)
     strcat(str, aux_str);
     strcpy(aux_str, ",\"data\": [");
     strcat(str, aux_str);
-    
+
 	for (int i = 0; i < npixels; i++)
 	{
         if (i == npixels-1)
             sprintf(linestr, "%05.06f", specMeasures[i]);
         else
             sprintf(linestr, "%05.06f,", specMeasures[i]);
-            
+
             strcat(str, linestr);
 	}
 
@@ -126,7 +126,7 @@ void measure_callback(AvsHandle* handle, int* new_scan)
             sprintf(linestr, "%04.06f", wavelengths[i]);
         else
             sprintf(linestr, "%04.06f,", wavelengths[i]);
-            
+
             strcat(str, linestr);
 	}
 
@@ -134,9 +134,9 @@ void measure_callback(AvsHandle* handle, int* new_scan)
     strcpy(aux_str, "]}");
     strcat(str, aux_str);
 
-    char topic[16] = "spec/meas";
+    char topic[16] = "spec/reply/meas";
     publishmsg(topic, str);
-	log_info("Driver: Measure Ended!");		
+	log_info("Driver: Measure Ended!");
     log_info("");
 
 }
@@ -149,7 +149,7 @@ int spec_meas(char* serialnr)
     AvsHandle specHandle = AVS_GetHandleFromSerial(serialnr);
     oneSerial = serialnr;
     t = clock();
-	AVS_MeasureCallback(specHandle, &measure_callback, 1);    
+	AVS_MeasureCallback(specHandle, &measure_callback, 1);
 
 	return 0;
 }
@@ -162,11 +162,14 @@ void spec_stop()
 
 
 void spec_init()
-{  
+{
     int rc;
     int NrDevices = 0;
     int RequiredSize = 0;
     AvsHandle specHandle;
+    char topic[20] = "spec/reply/start";
+    char str[500];
+    char aux_str[50];
 
     log_info("");
 	log_debug("Driver: AVS_Init: %d",AVS_Init(0));
@@ -179,7 +182,7 @@ void spec_init()
 	AvsIdentityType *devices = (AvsIdentityType *) calloc(RequiredSize, sizeof(AvsIdentityType));
 	AVS_GetList(RequiredSize, &RequiredSize, (AvsIdentityType *)devices);
 	log_info("Driver: Device List: %s", devices);
-	
+
 	specHandle = AVS_Activate((AvsIdentityType *)devices);
 	log_info("Driver: Device Handle Activated: %d", specHandle);
 	rc = spec_config(specHandle, &MeasSpecConfig);
@@ -190,6 +193,17 @@ void spec_init()
 		exit(EXIT_FAILURE);
 	}
     log_info("");
+
+    log_debug("Buffers Done");
+
+    strcpy(str, "{\"serial\": \"0806052U1\"");
+    AVS_GetNumPixels(specHandle, &npixels);
+    strcpy(aux_str, ",\"npixels\": ");
+    strcat(str, aux_str);
+    sprintf(aux_str, "%04d}", npixels);
+    strcat(str, aux_str);
+    publishmsg(topic, str);
+    log_info("Start replied");
 
 }
 

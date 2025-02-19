@@ -19,7 +19,7 @@ void main(int argc, char *argv[])
 	int rc;
 
     log_set_level(atoi(argv[1]));
-    fptr_log = fopen("/home/pi/specAVS/log/spectral.log","w");
+    fptr_log = fopen("/home/hermes/specAVS/log/spectral.log","w");
     if(fptr_log == NULL)
     {
         log_error("SYSTEM: Error opening log file!");
@@ -32,7 +32,7 @@ void main(int argc, char *argv[])
     log_info("#########################################");
     log_info("");
 
-	
+
     signal(SIGINT, handle_shutdown);
 
 
@@ -45,7 +45,7 @@ void main(int argc, char *argv[])
 
 	// #############################################################################
 	// MQTT Configuring
-	// #############################################################################	
+	// #############################################################################
 	MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
 	MQTTClient_message pubmsg = MQTTClient_message_initializer;
 
@@ -55,18 +55,18 @@ void main(int argc, char *argv[])
 	conn_opts.keepAliveInterval = 20;
 	conn_opts.cleansession = 1;
 	MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, delivered);
-	
+
 	int mqtt_trials = 0;
 
     for (int mqtt_trials = 0; mqtt_trials < 5; mqtt_trials++)
     {
-    
+
 	    if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
     	{
 	        log_error("MQTT: Failed to connect to MQTT Broker, return code %d", rc);
 	        log_info("MQTT: Trying reconnection...");
 	        sleep(1);
-    	} else 
+    	} else
         {
             log_info("MQTT: Client Connected.");
             break;
@@ -76,12 +76,12 @@ void main(int argc, char *argv[])
 	MQTTClient_subscribe(client, "spec/cmd/meas", QOS);
 	MQTTClient_subscribe(client, "spec/cmd/stop", QOS);
 	MQTTClient_subscribe(client, "spec/cmd/start", QOS);
-	MQTTClient_subscribe(client, "spec/config", QOS);
+	MQTTClient_subscribe(client, "spec/cmd/config", QOS);
 
     log_info("");
-    log_info("SYSTEM: All Configuration Done!");    
+    log_info("SYSTEM: All Configuration Done!");
     log_info("");
-    
+
 
 	while(1);
 }

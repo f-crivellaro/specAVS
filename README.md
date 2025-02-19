@@ -27,6 +27,16 @@ Driver for AVANTES spectrometers operation
 * make
 * sudo make install
 
+## cJSON
+* sudo apt install libcjson-dev
+* cd ~
+* git clone https://github.com/DaveGamble/cJSON.git
+* cd cJSON
+* mkdir build && cd build
+* cmake .. -DENABLE_CJSON_TEST=Off
+* make
+* sudo make install
+
 
 ## Project installation
 * cd ~
